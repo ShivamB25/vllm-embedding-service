@@ -4,13 +4,19 @@ Cold starts: 5-10 seconds (vs 30s without snapshots)
 
 This version uses vLLM's Python API directly instead of the server,
 enabling GPU memory snapshots for instant cold starts.
+
+Model: KaLM-Embedding-Gemma3-12B-2511 (11.76B params)
+- Max tokens: 32,000 (recommended: 512 for typical usage)
+- Embedding dimension: 3840
+- MRL support: Variable dimensions (3840, 2048, 1024, 512, 256, 128, 64)
+- Pooling: Last token pooling
 """
 
 import modal
 
 # Constants
 MODEL_NAME = "tencent/KaLM-Embedding-Gemma3-12B-2511"
-MODEL_REVISION = "CausalLM"
+MODEL_REVISION = "CausalLM"  # Required for vLLM (only supports Gemma3ForCausalLM)
 APP_NAME = "vllm-embedding-snapshot"
 MINUTES = 60
 

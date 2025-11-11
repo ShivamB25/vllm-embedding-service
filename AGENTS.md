@@ -18,7 +18,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a production vLLM embedding service deployment on Modal, serving the **tencent/KaLM-Embedding-Gemma3-12B-2511** model (12B parameters). The service provides two deployment options: a GPU snapshot-based Python API (5-10s cold starts) and an OpenAI-compatible HTTP server (~30s cold starts).
+This is a production vLLM embedding service deployment on Modal, serving the **tencent/KaLM-Embedding-Gemma3-12B-2511** model (11.76B parameters). The service provides two deployment options: a GPU snapshot-based Python API (5-10s cold starts) and an OpenAI-compatible HTTP server (~30s cold starts).
+
+### Model Specifications
+
+- **Parameters**: 11.76B (fine-tuned from Google's Gemma-3-12B)
+- **Max Input Tokens**: 32,000
+- **Recommended Sequence Length**: 512 tokens for typical usage
+- **Embedding Dimension**: 3840
+- **MRL Support**: Matryoshka Representation Learning with variable dimensions (3840, 2048, 1024, 512, 256, 128, 64)
+- **Pooling Method**: Last token pooling
+- **Data Type**: BF16 (bfloat16)
+- **Performance**: Ranks #1 on MMTEB benchmarks (Nov 2025) with 72.32 mean score
 
 ## Development Commands
 
@@ -80,13 +91,14 @@ Both are mounted to avoid re-downloading/recompiling on each cold start.
 
 ### Model Configuration
 
-Key vLLM parameters set in `modal_vllm_embedding_with_snapshot.py:90-98`:
+Key vLLM parameters set in `modal_vllm_embedding_with_snapshot.py:95-103`:
 - `task="embed"`: Embedding mode (not text generation)
 - `enforce_eager=True`: Disables CUDA graph optimization for snapshot compatibility
 - `gpu_memory_utilization=0.9`: Uses 90% of A100-40GB memory
-- `revision=MODEL_REVISION`: Set to "CausalLM" for this model
+- `revision="CausalLM"`: Required because vLLM only supports Gemma3ForCausalLM variant
 - `trust_remote_code=True`: Required for custom model code
-- Maximum sequence length is auto-detected from model configuration
+- `device="cuda"`: Load directly onto GPU for snapshot creation
+- Maximum sequence length is auto-detected (32K max tokens, 512 recommended for typical usage)
 
 ## Usage Patterns
 
@@ -127,5 +139,8 @@ The service uses multiple strategies to minimize cold starts:
 - The snapshot version uses vLLM's Python API directly, not the CLI server
 - HTTP server uses subprocess approach and cannot leverage GPU snapshots
 - First deployment after code changes triggers a new snapshot creation (~2 minutes)
-- The model revision "CausalLM" is specific to this model variant
+- The model revision "CausalLM" is required because vLLM only supports Gemma3ForCausalLM
 - Both deployment modes share the same cached volumes for efficiency
+- **MRL Support**: Model supports Matryoshka Representation Learning with variable dimensions (3840 down to 64). This allows flexibility in embedding size vs. performance trade-offs
+- **Token Limits**: While the model supports up to 32,000 tokens, 512 tokens is recommended for typical usage to balance performance and accuracy
+- **Embedding Dimension**: Outputs are 3840-dimensional vectors by default (can be reduced via MRL)
