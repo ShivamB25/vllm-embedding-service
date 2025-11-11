@@ -91,13 +91,15 @@ Both are mounted to avoid re-downloading/recompiling on each cold start.
 
 ### Model Configuration
 
-Key vLLM parameters set in `modal_vllm_embedding_with_snapshot.py:95-103`:
+Key vLLM parameters set in `modal_vllm_embedding_with_snapshot.py:96-106`:
 - `task="embed"`: Embedding mode (not text generation)
 - `enforce_eager=True`: Disables CUDA graph optimization for snapshot compatibility
 - `gpu_memory_utilization=0.9`: Uses 90% of A100-40GB memory
 - `revision="CausalLM"`: Required because vLLM only supports Gemma3ForCausalLM variant
 - `trust_remote_code=True`: Required for custom model code
 - `device="cuda"`: Load directly onto GPU for snapshot creation
+- `dtype="auto"`: Auto-detects BF16 precision from model configuration
+- `max_num_seqs=256`: Optimizes batch processing throughput for concurrent requests
 - Maximum sequence length is auto-detected (32K max tokens, 512 recommended for typical usage)
 
 ## Usage Patterns

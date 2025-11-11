@@ -101,6 +101,8 @@ class VLLMEmbeddingSnapshot:
             gpu_memory_utilization=0.9,
             trust_remote_code=True,
             device="cuda",  # Load directly onto GPU for snapshot
+            dtype="auto",  # Auto-detect BF16 from model config
+            max_num_seqs=256,  # Optimize batch processing throughput
         )
         print("Model loaded onto GPU - ready for snapshot!")
         vllm_cache_vol.commit()
@@ -184,6 +186,10 @@ def serve_http():
         "--trust-remote-code",
         "--served-model-name",
         MODEL_NAME,
+        "--dtype",
+        "auto",  # Auto-detect BF16 from model config
+        "--max-num-seqs",
+        "256",  # Optimize batch processing throughput
     ]
 
     print(f"Starting vLLM HTTP server: {' '.join(cmd)}")
