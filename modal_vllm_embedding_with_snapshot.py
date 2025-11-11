@@ -93,7 +93,6 @@ class VLLMEmbeddingSnapshot:
             enforce_eager=True,
             revision=MODEL_REVISION,
             gpu_memory_utilization=0.9,
-            max_model_len=8192,
             trust_remote_code=True,
             device="cuda",  # Load directly onto GPU for snapshot
         )
@@ -176,8 +175,6 @@ def serve_http():
         "--enforce-eager",
         "--gpu-memory-utilization",
         "0.9",
-        "--max-model-len",
-        "8192",
         "--trust-remote-code",
         "--served-model-name",
         MODEL_NAME,

@@ -1,6 +1,20 @@
-# CLAUDE.md
+# AGENTS.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Documentation Sources
+
+**IMPORTANT**: When updating code or documentation in this repository, STRICTLY use these official Modal resources for context and accuracy:
+
+1. **Official Modal Documentation**: https://modal.com/docs/
+   - Primary source for Modal API reference, features, and best practices
+   - Use for GPU snapshots, volumes, deployment patterns, and configuration
+
+2. **Modal Examples Repository**: https://github.com/modal-labs/modal-examples
+   - Reference implementations and patterns
+   - vLLM integration examples and embedding service patterns
+
+**Do NOT rely on outdated information or make assumptions about Modal features without verifying against these sources.**
 
 ## Project Overview
 
@@ -66,13 +80,13 @@ Both are mounted to avoid re-downloading/recompiling on each cold start.
 
 ### Model Configuration
 
-Key vLLM parameters set in `modal_vllm_embedding_with_snapshot.py:90-100`:
+Key vLLM parameters set in `modal_vllm_embedding_with_snapshot.py:90-98`:
 - `task="embed"`: Embedding mode (not text generation)
 - `enforce_eager=True`: Disables CUDA graph optimization for snapshot compatibility
 - `gpu_memory_utilization=0.9`: Uses 90% of A100-40GB memory
-- `max_model_len=8192`: Maximum sequence length
 - `revision=MODEL_REVISION`: Set to "CausalLM" for this model
 - `trust_remote_code=True`: Required for custom model code
+- Maximum sequence length is auto-detected from model configuration
 
 ## Usage Patterns
 
