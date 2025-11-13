@@ -58,7 +58,7 @@ The legacy standalone `modal_vllm_embedding.py` module has been removed. If you 
 1. **Image build** – `modal.Image.from_registry("nvidia/cuda:12.8.0-devel-ubuntu22.04", add_python="3.12")` installs vLLM 0.10.2, PyTorch 2.8.0, and Hugging Face transfer acceleration.
 2. **Volumes** – `hf-embedding-cache` stores model weights and `vllm-jit-cache` stores JIT artifacts. Both volumes are mounted into `/root/.cache`. Commit volumes after downloads to persist updates.
 3. **`download_model_weights`** – optional function that downloads weights once per change so deployment can immediately snapshot.
-4. **`VLLMEmbeddingSnapshot` class** – single-container Modal class with `enable_memory_snapshot=True` and `experimental_options={"enable_gpu_snapshot": True}`. `@modal.enter(snap=True)` loads the model onto GPU before snapshotting. Both the class and the optional HTTP server run with `timeout=5 * MINUTES` and `container_idle_timeout=5 * MINUTES` so idle containers shut down quickly. Cold starts restore in 5–10 seconds.
+4. **`VLLMEmbeddingSnapshot` class** – single-container Modal class with `enable_memory_snapshot=True` and `experimental_options={"enable_gpu_snapshot": True}`. `@modal.enter(snap=True)` loads the model onto GPU before snapshotting. Both the class and the optional HTTP server run with `timeout=5 * MINUTES` and `scaledown_window=5 * MINUTES` so idle containers shut down quickly. Cold starts restore in 5–10 seconds.
 5. **Methods** – `embed` returns raw embeddings; `embed_with_metadata` returns dictionaries containing text, embedding, and dimension metadata, which is useful for Matryoshka Representation Learning (MRL) scenarios.
 6. **Optional HTTP server** – `serve_http()` wraps `vllm serve` in a subprocess and exposes `/v1/embeddings`. Use this only when OpenAI-compatible HTTP access is required and longer cold starts are acceptable.
 
@@ -123,8 +123,7 @@ When batching, stay under the recommended 512-token sequence length unless you u
 | `max_num_seqs` | `256` | Good balance for concurrent requests |
 | `HF_HUB_ENABLE_HF_TRANSFER` | `1` | Speeds up weight downloads |
 | Volumes | `hf-embedding-cache`, `vllm-jit-cache` | Avoid repeat downloads and recompiles |
-| `container_idle_timeout` | `5 * MINUTES` | Forces a shutdown after 5 minutes of inactivity |
-| Scaling | `max_containers=1`, `scaledown_window=5*MINUTES` | Keeps the deployment single-tenant and scales to zero quickly |
+| Scaling | `max_containers=1`, `scaledown_window=5*MINUTES` | Keeps the deployment single-tenant and powers off containers 5 minutes after the last request |
 
 ### Optional HTTP endpoint
 
