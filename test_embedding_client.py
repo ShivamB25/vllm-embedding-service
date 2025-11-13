@@ -11,7 +11,9 @@ BASE_URL = "https://your-workspace--vllm-embedding-service-serve.modal.run/v1"
 
 def main():
     # Initialize OpenAI client pointing to vLLM server
-    client = OpenAI(api_key="EMPTY", base_url=BASE_URL)  # vLLM doesn't require authentication
+    client = OpenAI(
+        api_key="EMPTY", base_url=BASE_URL
+    )  # vLLM doesn't require authentication
 
     print("=" * 60)
     print("vLLM Embedding Service Test")

@@ -68,6 +68,7 @@ def download_model_weights():
 @app.cls(
     image=vllm_image,
     gpu="A100-40GB",
+    max_containers=1,  # Ensure we only ever use a single GPU-backed container
     scaledown_window=5 * MINUTES,  # Combined: scale down after 5 mins idle
     timeout=10 * MINUTES,
     volumes={
@@ -152,6 +153,7 @@ class VLLMEmbeddingSnapshot:
 @app.function(
     image=vllm_image,
     gpu="A100-40GB",
+    max_containers=1,  # Single HTTP container to avoid scaling past one GPU
     scaledown_window=5 * MINUTES,  # Scale down after 5 mins idle
     timeout=10 * MINUTES,
     volumes={
