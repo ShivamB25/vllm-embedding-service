@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a production vLLM embedding service deployment on Modal, serving the **tencent/KaLM-Embedding-Gemma3-12B-2511** model (11.76B parameters). The service provides two deployment options: a GPU snapshot-based Python API (5-10s cold starts) and an OpenAI-compatible HTTP server (~30s cold starts).
+This is a production vLLM embedding service deployment on Modal, serving the **tencent/KaLM-Embedding-Gemma3-12B-2511** model (11.76B parameters). The primary interface is the GPU snapshot-based Python API (5–10 s cold starts). An optional OpenAI-compatible HTTP server (~30 s cold starts) is still available via the `serve_http()` function inside `modal_vllm_embedding_with_snapshot.py`.
 
 ### Model Specifications
 
@@ -41,38 +41,38 @@ modal token new
 
 ### Deployment
 ```bash
-# GPU Snapshot version (RECOMMENDED - 5-10s cold start)
+# Deploy the GPU snapshot app (recommended)
 modal deploy modal_vllm_embedding_with_snapshot.py
 
-# Test the deployment
+# Optional: warm caches or iterate locally
 modal run modal_vllm_embedding_with_snapshot.py
 ```
 
 ### Testing
 ```bash
-# Test the HTTP endpoint (update BASE_URL in file first)
+# Exercise the HTTP endpoint (update BASE_URL first) – only relevant if serve_http() is in use
 python test_embedding_client.py
 
-# Local testing with Modal
+# Local validation for the snapshot class
 modal run modal_vllm_embedding_with_snapshot.py
 ```
 
 ## Architecture
 
-### Two-Tier Deployment Strategy
+### Deployment Surfaces
 
-1. **GPU Snapshot API (Python)** - `VLLMEmbeddingSnapshot` class
+1. **GPU Snapshot API (Python)** – `VLLMEmbeddingSnapshot` class
    - Uses Modal's `enable_memory_snapshot=True` with `@modal.enter(snap=True)`
    - Model is loaded onto GPU during snapshot creation, then restored instantly
-   - Cold start: 5-10 seconds (vs 30s without snapshots)
-   - Access via Modal's `Cls.from_name()` and `.remote()` pattern
-   - Best for Python applications and cost optimization
+   - Cold start: 5–10 seconds (versus ~30 seconds without snapshots)
+   - Access via Modal's `Cls.from_name()` / `.remote()` pattern
+   - Default for production traffic; all new work should target this path
 
-2. **HTTP Server** - `serve_http()` function
-   - OpenAI-compatible `/v1/embeddings` endpoint
-   - Uses vLLM subprocess server (cannot use GPU snapshots)
+2. **HTTP Server (optional)** – `serve_http()` function in `modal_vllm_embedding_with_snapshot.py`
+   - OpenAI-compatible `/v1/embeddings` endpoint implemented via `vllm serve`
+   - Runs as a subprocess (no GPU snapshot support)
    - Cold start: ~30 seconds
-   - Best for REST API integrations and non-Python clients
+   - Use only when REST API integrations or non-Python clients are unavoidable
 
 ### GPU Snapshot Mechanism
 
