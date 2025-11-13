@@ -133,7 +133,7 @@ The service uses multiple strategies to minimize cold starts:
 
 ### Resource Allocation
 - GPU: A100-40GB (required for 12B model)
-- Timeout: 10 minutes for inference, 20 minutes for weight download
+- Timeout: 5 minutes across inference, HTTP endpoint, and the optional weight download helper
 - Container lifecycle: 5-minute idle period before scale-down
 - Autoscaling: `max_containers=1` on both `VLLMEmbeddingSnapshot` and `serve_http()` so the service never scales past a single GPU-backed container (per Modal scaling guide)
 

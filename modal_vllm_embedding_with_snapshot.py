@@ -49,7 +49,7 @@ vllm_image = (
 @app.function(
     image=vllm_image,
     volumes={"/root/.cache/huggingface": hf_cache_vol},
-    timeout=20 * MINUTES,
+    timeout=5 * MINUTES,
 )
 def download_model_weights():
     """Download model weights to cache volume"""
@@ -70,7 +70,8 @@ def download_model_weights():
     gpu="A100-40GB",
     max_containers=1,  # Ensure we only ever use a single GPU-backed container
     scaledown_window=5 * MINUTES,  # Combined: scale down after 5 mins idle
-    timeout=10 * MINUTES,
+    container_idle_timeout=5 * MINUTES,
+    timeout=5 * MINUTES,
     volumes={
         "/root/.cache/huggingface": hf_cache_vol,
         "/root/.cache/vllm": vllm_cache_vol,
@@ -155,13 +156,14 @@ class VLLMEmbeddingSnapshot:
     gpu="A100-40GB",
     max_containers=1,  # Single HTTP container to avoid scaling past one GPU
     scaledown_window=5 * MINUTES,  # Scale down after 5 mins idle
-    timeout=10 * MINUTES,
+    container_idle_timeout=5 * MINUTES,
+    timeout=5 * MINUTES,
     volumes={
         "/root/.cache/huggingface": hf_cache_vol,
         "/root/.cache/vllm": vllm_cache_vol,
     },
 )
-@modal.web_server(port=8000, startup_timeout=10 * MINUTES)
+@modal.web_server(port=8000, startup_timeout=5 * MINUTES)
 def serve_http():
     """
     OpenAI-compatible HTTP server (standard cold start ~30s)
