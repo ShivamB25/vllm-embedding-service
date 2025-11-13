@@ -1,67 +1,48 @@
 # vLLM Embedding Service on Modal
 
-Production deployment of **tencent/KaLM-Embedding-Gemma3-12B-2511** (12B params) with ultra-fast GPU snapshots.
+This repository contains the production deployment of **tencent/KaLM-Embedding-Gemma3-12B-2511** on Modal. The only supported interface is the GPU snapshot powered `VLLMEmbeddingSnapshot` class defined in `modal_vllm_embedding_with_snapshot.py`.
 
-## 🚀 Quick Deploy
+## Quick Start
 
 ```bash
-pip install modal openai
+pip install modal openai numpy
 modal token new
 
-# Option 1: Standard HTTP Server (OpenAI-compatible) - ~30s cold start
-modal deploy modal_vllm_embedding.py
-
-# Option 2: GPU Snapshot (RECOMMENDED) - 5-10s cold start ⚡
+# Deploy the GPU snapshot application (5–10 s cold starts)
 modal deploy modal_vllm_embedding_with_snapshot.py
+
+# Run it locally during development
+modal run modal_vllm_embedding_with_snapshot.py
 ```
 
-## 📖 Complete Documentation
-
-**👉 See [`VLLM_COMPLETE_GUIDE.md`](./VLLM_COMPLETE_GUIDE.md)** for everything:
-
-- ✅ Detailed setup & deployment
-- ✅ Both HTTP and GPU snapshot options
-- ✅ Usage examples (OpenAI, LangChain, LlamaIndex)
-- ✅ GPU snapshots explained (3-6x faster cold starts!)
-- ✅ Performance benchmarks
-- ✅ Cost optimization (save up to 70%)
-- ✅ Troubleshooting guide
-- ✅ Integration examples
-
-## 🎯 Performance
-
-| Option | Cold Start | Access | Best For |
-|--------|-----------|---------|----------|
-| Standard HTTP | ~30s | OpenAI API | REST APIs, integrations |
-| **GPU Snapshot** ⚡ | **5-10s** | Python API | Python apps, cost optimization |
-
-## 📁 Files
-
-- `modal_vllm_embedding.py` - Standard HTTP server
-- `modal_vllm_embedding_with_snapshot.py` - GPU snapshot version (RECOMMENDED)
-- `test_embedding_client.py` - Test suite
-- `VLLM_COMPLETE_GUIDE.md` - Full documentation
-- `README.md` - This file
-
-## 💡 Quick Example
+## Usage
 
 ```python
-# HTTP Server
-from openai import OpenAI
-client = OpenAI(api_key="EMPTY", base_url="https://your-app.modal.run/v1")
-response = client.embeddings.create(input=["Hello"], model="tencent/KaLM-Embedding-Gemma3-12B-2511")
-
-# GPU Snapshot (faster!)
 from modal import Cls
+
 VLLMEmbedding = Cls.from_name("vllm-embedding-snapshot", "VLLMEmbeddingSnapshot")
 embeddings = VLLMEmbedding().embed.remote(["Hello world"])
+print(len(embeddings[0]))  # 3840 dimensions
 ```
 
-## 🔗 Built With
+The class also exposes `embed_with_metadata` for callers that need Matryoshka Representation Learning (MRL) metadata or alternative embedding dimensions.
 
-- Context7 (`/modal-labs/modal-examples`, `/websites/modal`, `/websites/vllm_ai_en`)
-- Sequential Thinking for planning
-- Modal for serverless GPU infrastructure
-- vLLM for optimized inference
+## Model & Deployment Facts
 
-**Read the complete guide:** [`VLLM_COMPLETE_GUIDE.md`](./VLLM_COMPLETE_GUIDE.md)
+- Model: `tencent/KaLM-Embedding-Gemma3-12B-2511` (11.76B parameters, BF16)
+- Max input tokens: 32,000 (512 recommended for most workloads)
+- Embedding dimension: 3,840 with MRL support for 3,840 → 64
+- Pooling method: last-token pooling via vLLM embed task
+- Hardware: A100-40GB GPU, `gpu_memory_utilization=0.9`, `max_num_seqs=256`
+- Persistent volumes: `hf-embedding-cache` and `vllm-jit-cache`
+- Cold start strategy: Modal GPU memory snapshot using `@modal.enter(snap=True)` and `experimental_options={"enable_gpu_snapshot": True}`
+
+## Files
+
+- `modal_vllm_embedding_with_snapshot.py` – Modal app containing `VLLMEmbeddingSnapshot`
+- `test_embedding_client.py` – Simple OpenAI-compatible client for smoke tests (update `BASE_URL` before running)
+- `VLLM_COMPLETE_GUIDE.md` – Extended documentation for this deployment
+
+## Additional Resources
+
+Refer to [`VLLM_COMPLETE_GUIDE.md`](./VLLM_COMPLETE_GUIDE.md) for snapshot internals, configuration guidance, troubleshooting, and integration patterns.
